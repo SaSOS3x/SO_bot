@@ -2,6 +2,7 @@ import aiosqlite
 import logging
 
 async def init_db():
+    """Инициализация бд"""
     async with aiosqlite.connect('bot.db') as conn:
 
         cursor = await conn.cursor()
@@ -27,18 +28,21 @@ async def init_db():
         await conn.commit()
 
 async def save_user(user_id, name):
+    """Сохранение нового пользователя в бд"""
     async with aiosqlite.connect('bot.db') as conn:
         cursor = await conn.cursor()
         await cursor.execute('INSERT INTO users (user_id, name) VALUES (?, ?)', (user_id, name))
         await conn.commit()
 
 async def save_post(user_id, message, message_id):
+    """Сохранение нового поста в бд"""
     async with aiosqlite.connect('bot.db') as conn:
         cursor = await conn.cursor()
         await cursor.execute('INSERT INTO posts (user_id, message, message_id) VALUES (?, ?, ?)', (user_id, message, message_id))
         await conn.commit()
 
 async def is_user_registered(user_id:int):
+    """Проверка регистрации пользователя"""
     async with aiosqlite.connect('bot.db') as conn:
         cursor = await conn.cursor()
         await cursor.execute('SELECT user_id FROM users WHERE user_id = ?', (user_id,))
@@ -46,6 +50,7 @@ async def is_user_registered(user_id:int):
         return result[0] if result else None
 
 async def get_username(user_id):
+    """Получение имени пользователя"""
     async with aiosqlite.connect('bot.db') as conn:
         cursor = await conn.cursor()
         await cursor.execute('SELECT name FROM users WHERE user_id = ?', (user_id,))
@@ -53,6 +58,7 @@ async def get_username(user_id):
         return result[0] if result else None
     
 async def update_user(user_id, new_name):
+    """Обновление имени пользователя"""
     async with aiosqlite.connect('bot.db') as conn:
         cursor = await conn.cursor()
         await cursor.execute('UPDATE users SET name = ? WHERE user_id = ?', (new_name, user_id))

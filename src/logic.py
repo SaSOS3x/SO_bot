@@ -44,6 +44,7 @@ media_groups_lock = asyncio.Lock()
 # Обработчик команды /start
 @dp.message(Command("start")) # Команда обрабатывается после символа "/"
 async def start(message: types.Message, state: FSMContext):
+    """Обработчик команды /start"""
     user_id = message.from_user.id
     if await is_user_registered(user_id):
         await message.answer("Вы уже зарегистрированы! Что вы хотите сделать?", reply_markup=main_menu)
@@ -55,6 +56,7 @@ async def start(message: types.Message, state: FSMContext):
 # Обработчик ввода имени
 @dp.message(Registration.name)
 async def process_name(message: types.Message, state: FSMContext):
+    """Обработчик ввода имени"""
     await state.update_data(name=message.text)
 
     user_id = message.from_user.id
@@ -73,6 +75,7 @@ async def process_name(message: types.Message, state: FSMContext):
 # Новый обработчик кнопки "Изменить имя"
 @dp.message(lambda message: message.text == "Изменить имя")
 async def change_name_start(message: types.Message, state: FSMContext):
+    """Обработчик кнопки \"Изменить имя\""""
     if not await is_user_registered(message.from_user.id):
         await message.answer("Сначала зарегистрируйтесь!")
         return
@@ -83,12 +86,14 @@ async def change_name_start(message: types.Message, state: FSMContext):
 # Обработчик отмены для нового состояния
 @dp.message(lambda message: message.text == "Отмена", ChangeName.name)
 async def cancel_name_change(message: types.Message, state: FSMContext):
+    """Обработчик отмены для нового состояния"""
     await message.answer("Изменение имени отменено", reply_markup=main_menu)
     await state.clear()
 
 # Обработчик нового имени
 @dp.message(ChangeName.name)
 async def process_new_name(message: types.Message, state: FSMContext):
+    """Обработчик ввода нового имени"""
     user_id = message.from_user.id
     new_name = message.text
     
@@ -105,6 +110,7 @@ async def process_new_name(message: types.Message, state: FSMContext):
 # Обработчик кнопки "Опубликовать пост"
 @dp.message(lambda message: message.text == "Задать вопрос")
 async def publish_post(message: types.Message, state: FSMContext):
+    """Обработчик кнопки \"Опубликовать пост\""""
     user_id = message.from_user.id
     if not await is_user_registered(user_id):
         await message.answer("Пожалуйста, завершите регистрацию, чтобы задать вопрос.")
@@ -115,6 +121,7 @@ async def publish_post(message: types.Message, state: FSMContext):
 # Обработчик кнопки "Отмена"
 @dp.message(lambda message: message.text == "Отмена", Registration.post)
 async def cancel_post(message: types.Message, state: FSMContext):
+    """Обработчик кнопки \"Отмена\""""
     await message.answer(CANCEL_MESSAGE, reply_markup=main_menu)
     await state.clear()  # Очистка состояния
 
@@ -123,6 +130,7 @@ async def cancel_post(message: types.Message, state: FSMContext):
 # Обработчик текстового поста
 @dp.message(Registration.post, lambda message: message.text)
 async def process_post(message: types.Message, state: FSMContext):
+    """Обработчик текстового поста"""
 
     user_id = message.from_user.id
     user_login = message.from_user.username
@@ -152,6 +160,7 @@ async def process_post(message: types.Message, state: FSMContext):
 # Обработчик медиагрупп (несколько фото/видео)
 @dp.message(Registration.post, lambda message: message.media_group_id)
 async def process_media_group(message: types.Message, state: FSMContext):
+    """Обработчик медиагрупп (несколько фото/видео)"""
     media_group_id = message.media_group_id
     user_id = message.from_user.id
 
@@ -190,6 +199,7 @@ async def process_media_group(message: types.Message, state: FSMContext):
 
 # Функция для отправки медиагруппы после задержки
 async def send_media_group_after_delay(media_group_id, user_id, state):
+    """Функция для отправки медиагруппы после задержки"""
     # Ждем 2 секунды перед отправкой
     await asyncio.sleep(2)
 
@@ -226,6 +236,7 @@ async def send_media_group_after_delay(media_group_id, user_id, state):
 # Обработчик одиночных фото
 @dp.message(Registration.post, lambda message: message.photo and not message.media_group_id)
 async def process_photo(message: types.Message, state: FSMContext):
+    """Обработчик одиночных фото"""
     user_id = message.from_user.id
     photo_id = message.photo[-1].file_id  # Берем самое большое фото
     user_login = message.from_user.username
@@ -245,6 +256,7 @@ async def process_photo(message: types.Message, state: FSMContext):
 # Обработчик одиночных видео
 @dp.message(Registration.post, lambda message: message.video and not message.media_group_id)
 async def process_video(message: types.Message, state: FSMContext):
+    """Обработчик одиночных видео"""
     user_id = message.from_user.id
     video_id = message.video.file_id
     caption = message.caption if message.caption else "Видео без подписи"
@@ -263,6 +275,7 @@ async def process_video(message: types.Message, state: FSMContext):
 # Обработчик документов
 @dp.message(Registration.post, lambda message: message.document)
 async def process_document(message: types.Message, state: FSMContext):
+    """Обработчик документов"""
     user_id = message.from_user.id
     document_id = message.document.file_id
 
@@ -282,6 +295,7 @@ async def process_document(message: types.Message, state: FSMContext):
 # Обработчик голосовых сообщений
 @dp.message(Registration.post, lambda message: message.voice)
 async def process_voice(message: types.Message, state: FSMContext):
+    """Обработчик голосовых сообщений"""
     user_id = message.from_user.id
     voice_id = message.voice.file_id
 
@@ -301,6 +315,7 @@ async def process_voice(message: types.Message, state: FSMContext):
 # Обработчик аудио
 @dp.message(Registration.post, lambda message: message.audio)
 async def process_voice(message: types.Message, state: FSMContext):
+    """Обработчик аудио"""
     user_id = message.from_user.id
     audio_id = message.audio.file_id
 
