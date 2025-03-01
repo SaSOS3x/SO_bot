@@ -9,10 +9,10 @@ import asyncio
 
 # Импортируем модули из текущей директории
 from settings import BOT_TOKEN, MAIN_CHANNEL_ID, SECOND_CHANNEL_ID
-from text import WELCOME_MESSAGE, REGISTRATION_NAME, REGISTRATION_SUCCESS, POST_MESSAGE, POST_SUCCESS, CANCEL_MESSAGE
+from text import WELCOME_MESSAGE, REGISTRATION_NAME, REGISTRATION_SUCCESS, POST_MESSAGE, POST_SUCCESS, CANCEL_MESSAGE, POST_ERROR
 from menu import main_menu, cancel_menu
 from bd import save_user, save_post, is_user_registered, get_username, update_user
-from utils import default_post_text, second_post_text
+from utils import default_post_text, second_post_text, create_link
 
 # Инициализация бота
 bot = Bot(token=BOT_TOKEN)
@@ -134,21 +134,33 @@ async def process_post(message: types.Message, state: FSMContext):
 
     user_id = message.from_user.id
     user_login = message.from_user.username
-    
-    message_from_chat = await bot.send_message(MAIN_CHANNEL_ID, await default_post_text(await get_username(user_id), user_login, message.text), parse_mode="HTML") # Отправка сообщения с обработчиком default_post_text
-
-    logging.info(f"User {user_id} created new question in channel: {MAIN_CHANNEL_ID}")
 
 
-    public_channel_id = abs(MAIN_CHANNEL_ID) - 1000000000000
-    link = f"https://t.me/c/{public_channel_id}/{message_from_chat.message_id}"
+
+    try:
+        # Отправка сообщения с обработчиком default_post_text
+        message_from_chat = await bot.send_message(MAIN_CHANNEL_ID, await default_post_text(await get_username(user_id), user_login, message.text), parse_mode="HTML")
+
+        logging.info(f"User {user_id} created new question in channel: {MAIN_CHANNEL_ID}")
 
 
-    # Отправка сообщения в дополнительный канал
-    await bot.send_message(SECOND_CHANNEL_ID, await second_post_text(await get_username(user_id), user_login, message.text, link), parse_mode="HTML")
+
+        link = await create_link(MAIN_CHANNEL_ID, message_from_chat.message_id)
+
+        # Отправка сообщения в дополнительный канал
+        await bot.send_message(SECOND_CHANNEL_ID, await second_post_text(await get_username(user_id), user_login, message.text, link), message_thread_id=5, parse_mode="HTML")
+
+        logging.info(f"User {user_id} created new question in channel: {SECOND_CHANNEL_ID}")
+
+    except Exception as e:
+        logging.info(e)
+
+        await message.answer(POST_ERROR, reply_markup=main_menu)
+        await state.clear()  # Очистка состояния
+
+        return None # Возврат None, чтобы не обрабатывать следующее сообщение
 
 
-    logging.info(f"User {user_id} created new question in channel: {MAIN_CHANNEL_ID}")
 
     await save_post(user_id, message.text, message_from_chat.message_id)
 
